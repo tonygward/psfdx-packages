@@ -146,9 +146,34 @@ function New-SalesforcePackageVersion {
     Invoke-Sfdx -Command $command
 }
 
+function Get-SalesforcePackageVersions {
+    [CmdletBinding()]
+    Param(        
+        [Parameter(Mandatory = $false)][string] $PackageId,        
+        [Parameter(Mandatory = $false)][string] $PackageName,  
+
+        [Parameter(Mandatory = $true)][string] $DevHubUsername
+    )
+    if ((! $PackageId ) -and ($PackageName) ) {        
+        $package = Get-SalesforcePackage -Name $PackageName -DevHubUsername $DevHubUsername                      
+        $PackageId = $package.Id        
+    }    
+
+    $command = "sfdx force:package:version:list"
+    $command += " --targetdevhubusername $DevHubUsername"
+    if ($PackageId) {
+        $command += " --packages $PackageId"
+    }
+    $command += " --json"
+
+    $result = Invoke-Sfdx -Command $command    
+    return Show-SfdxResult -Result $result
+}
+
 Export-ModuleMember Get-SalesforcePackages
 Export-ModuleMember Get-SalesforcePackage
 Export-ModuleMember New-SalesforcePackage
 Export-ModuleMember Remove-SalesforcePackage
 
 Export-ModuleMember New-SalesforcePackageVersion
+Export-ModuleMember Get-SalesforcePackageVersions
