@@ -89,8 +89,10 @@ function Remove-SalesforcePackage {
 function New-SalesforcePackageVersion {
     [CmdletBinding()]
     Param(
-        [Parameter(Mandatory = $true)][string] $PackageId,        
-        [Parameter(Mandatory = $true)][string] $DevHubUsername,      
+        [Parameter(Mandatory = $false)][string] $PackageId,        
+        [Parameter(Mandatory = $false)][string] $PackageName,        
+        [Parameter(Mandatory = $true)][string] $DevHubUsername,
+
         [Parameter(Mandatory = $false)][string] $Name,
         [Parameter(Mandatory = $false)][string] $Description,
         [Parameter(Mandatory = $false)][string] $Tag,
@@ -101,10 +103,17 @@ function New-SalesforcePackageVersion {
         [Parameter(Mandatory = $false)][switch] $SkipValidation,
 
         [Parameter(Mandatory = $false)][int] $WaitMinutes,
-
-        [Parameter(Mandatory = $false)][string] $Path = "force-app/main/default",
         [Parameter(Mandatory = $false)][string] $ScratchOrgDefinitionFile = "config/project-scratch-def.json"
     ) 
+
+    if ((! $PackageId ) -and (! $PackageName) ) {
+        throw "Please provide a PackageId or Package Name"
+    }
+    if ((! $PackageId ) -and ($PackageName) ) {        
+        $package = Get-SalesforcePackage -Name $PackageName -DevHubUsername $DevHubUsername                      
+        $PackageId = $package.Id        
+    }
+
     $command += "sfdx force:package:version:create --package $PackageId"
     if ($Name) {
         $command += " --versionname $Name"
@@ -117,8 +126,7 @@ function New-SalesforcePackageVersion {
     }
     if ($CodeCoverage) {
         $command += " --codecoverage"
-    }
-    $command += " --path $Path"
+    }    
     $command += " --definitionfile $ScratchOrgDefinitionFile"    
 
     if (($InstallationKeyBypass) -or (! $InstallationKey)) {
@@ -134,7 +142,7 @@ function New-SalesforcePackageVersion {
     if ($WaitMinutes) {
         $command += " --wait $WaitMinutes"
     }
-
+    
     Invoke-Sfdx -Command $command
 }
 
