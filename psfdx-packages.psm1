@@ -152,7 +152,10 @@ function Get-SalesforcePackageVersions {
         [Parameter(Mandatory = $false)][string] $PackageId,        
         [Parameter(Mandatory = $false)][string] $PackageName,  
 
-        [Parameter(Mandatory = $true)][string] $DevHubUsername
+        [Parameter(Mandatory = $true)][string] $DevHubUsername,
+        [Parameter(Mandatory = $false)][switch] $Released,
+        [Parameter(Mandatory = $false)][switch] $Concise,
+        [Parameter(Mandatory = $false)][switch] $ExtendedDetails
     )
     if ((! $PackageId ) -and ($PackageName) ) {        
         $package = Get-SalesforcePackage -Name $PackageName -DevHubUsername $DevHubUsername                      
@@ -163,6 +166,35 @@ function Get-SalesforcePackageVersions {
     $command += " --targetdevhubusername $DevHubUsername"
     if ($PackageId) {
         $command += " --packages $PackageId"
+    }
+    if ($Released) {
+        $command += " --released"
+    }
+    if ($Concise) {
+        $command += " --concise"
+    }
+    if ($ExtendedDetails) {
+        $command += " --verbose"
+    }
+    $command += " --json"
+
+    $result = Invoke-Sfdx -Command $command    
+    return Show-SfdxResult -Result $result
+}
+
+function Remove-SalesforcePackageVersion {
+    [CmdletBinding()]
+    Param(        
+        [Parameter(Mandatory = $true)][string] $PackageVersionId,                
+        [Parameter(Mandatory = $true)][string] $DevHubUsername,
+        [Parameter(Mandatory = $false)][switch] $NoPrompt
+    ) 
+
+    $command = "sfdx force:package:version:delete"
+    $command += " --package $PackageVersionId"
+    $command += " --targetdevhubusername $DevHubUsername"
+    if ($NoPrompt) {
+        $command += " --noprompt"
     }
     $command += " --json"
 
@@ -175,5 +207,6 @@ Export-ModuleMember Get-SalesforcePackage
 Export-ModuleMember New-SalesforcePackage
 Export-ModuleMember Remove-SalesforcePackage
 
-Export-ModuleMember New-SalesforcePackageVersion
 Export-ModuleMember Get-SalesforcePackageVersions
+Export-ModuleMember New-SalesforcePackageVersion
+Export-ModuleMember Remove-SalesforcePackageVersion
