@@ -86,8 +86,61 @@ function Remove-SalesforcePackage {
     $command += " --targetdevhubusername $DevHubUsername"
     Invoke-Sfdx -Command $command
 }  
+function New-SalesforcePackageVersion {
+    [CmdletBinding()]
+    Param(
+        [Parameter(Mandatory = $true)][string] $PackageId,        
+        [Parameter(Mandatory = $true)][string] $DevHubUsername,      
+        [Parameter(Mandatory = $false)][string] $Name,
+        [Parameter(Mandatory = $false)][string] $Description,
+        [Parameter(Mandatory = $false)][string] $Tag,
+
+        [Parameter(Mandatory = $false)][string] $InstallationKey,
+        [Parameter(Mandatory = $false)][switch] $InstallationKeyBypass,
+        [Parameter(Mandatory = $false)][switch] $CodeCoverage,
+        [Parameter(Mandatory = $false)][switch] $SkipValidation,
+
+        [Parameter(Mandatory = $false)][int] $WaitMinutes,
+
+        [Parameter(Mandatory = $false)][string] $Path = "force-app/main/default",
+        [Parameter(Mandatory = $false)][string] $ScratchOrgDefinitionFile = "config/project-scratch-def.json"
+    ) 
+    $command += "sfdx force:package:version:create --package $PackageId"
+    if ($Name) {
+        $command += " --versionname $Name"
+    }
+    if ($Description) {
+        $command += " --versiondescription $Description"
+    }    
+    if ($Tag) {
+        $command += " --tag $Tag"
+    }
+    if ($CodeCoverage) {
+        $command += " --codecoverage"
+    }
+    $command += " --path $Path"
+    $command += " --definitionfile $ScratchOrgDefinitionFile"    
+
+    if (($InstallationKeyBypass) -or (! $InstallationKey)) {
+        $command += " --installationkeybypass"
+    }
+    else {        
+        $command += " --installationkey $InstallationKey"
+    }
+
+    if ($SkipValidation) {
+        $command += " --skipvalidation"
+    }
+    if ($WaitMinutes) {
+        $command += " --wait $WaitMinutes"
+    }
+
+    Invoke-Sfdx -Command $command
+}
 
 Export-ModuleMember Get-SalesforcePackages
 Export-ModuleMember Get-SalesforcePackage
 Export-ModuleMember New-SalesforcePackage
 Export-ModuleMember Remove-SalesforcePackage
+
+Export-ModuleMember New-SalesforcePackageVersion
