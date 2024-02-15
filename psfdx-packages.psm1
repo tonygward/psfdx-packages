@@ -1,11 +1,11 @@
-function Invoke-Sfdx {
+function Invoke-Sf {
     [CmdletBinding()]
     Param([Parameter(Mandatory = $true)][string] $Command)
     Write-Verbose $Command
     return Invoke-Expression -Command $Command
 }
 
-function Show-SfdxResult {
+function Show-SfResult {
     [CmdletBinding()]
     Param([Parameter(Mandatory = $true)][psobject] $Result)
     $result = $Result | ConvertFrom-Json
@@ -22,13 +22,13 @@ function Get-SalesforcePackages {
         [Parameter(Mandatory = $true)][string] $DevHubUsername,
         [Parameter(Mandatory = $false)][switch] $IncludeExtendedPackageDetails
     )
-    $command = "sfdx force:package:list --targetdevhubusername $DevHubUsername"
+    $command = "sf package list --target-dev-hub $DevHubUsername"
     if ($IncludeExtendedPackageDetails) {
         $command += " --verbose"
     }
     $command += " --json"
-    $result = Invoke-Sfdx -Command $command
-    return Show-SfdxResult -Result $result
+    $result = Invoke-Sf -Command $command
+    return Show-SfResult -Result $result
 }
 
 function Get-SalesforcePackage {
@@ -56,19 +56,19 @@ function New-SalesforcePackage {
     if (! $Description) {
         $Description = $Name
     }
-    $command = "sfdx force:package:create --name $Name --description $Description"
+    $command = "sf package create --name $Name --description $Description"
     $command += " --path $Path"
-    $command += " --packagetype $PackageType"
+    $command += " --package-type $PackageType"
     if ($IsOrgDependent) {
-        $command += " --orgdependent"
+        $command += " --org-dependent"
     }
     if ($NoNamespace) {
-        $command += " --nonamespace"
+        $command += " --no-namespace"
     }
-    $command += " --targetdevhubusername $DevHubUsername"
+    $command += " --targetdev-hub $DevHubUsername"
     $command += " --json"
-    $result = Invoke-Sfdx -Command $command
-    $resultSfdx = Show-SfdxResult -Result $result
+    $result = Invoke-Sf -Command $command
+    $resultSfdx = Show-SfResult -Result $result
     return $resultSfdx.Id
 }
 
@@ -79,12 +79,12 @@ function Remove-SalesforcePackage {
         [Parameter(Mandatory = $true)][string] $DevHubUsername,
         [Parameter(Mandatory = $false)][switch] $NoPrompt
     )
-    $command = "sfdx force:package:delete --package $Name"
+    $command = "sf package delete --package $Name"
     if ($NoPrompt) {
-        $command += " --noprompt"
+        $command += " --no-prompt"
     }
-    $command += " --targetdevhubusername $DevHubUsername"
-    Invoke-Sfdx -Command $command
+    $command += " --target-dev-hub $DevHubUsername"
+    Invoke-Sf -Command $command
 }
 function New-SalesforcePackageVersion {
     [CmdletBinding()]
@@ -114,36 +114,36 @@ function New-SalesforcePackageVersion {
         $PackageId = $package.Id
     }
 
-    $command += "sfdx force:package:version:create --package $PackageId"
+    $command += "sf package version create --package $PackageId"
     if ($Name) {
-        $command += " --versionname $Name"
+        $command += " --version-name $Name"
     }
     if ($Description) {
-        $command += " --versiondescription $Description"
+        $command += " --version-description $Description"
     }
     if ($Tag) {
         $command += " --tag $Tag"
     }
     if ($CodeCoverage) {
-        $command += " --codecoverage"
+        $command += " --code-coverage"
     }
-    $command += " --definitionfile $ScratchOrgDefinitionFile"
+    $command += " --definition-file $ScratchOrgDefinitionFile"
 
     if (($InstallationKeyBypass) -or (! $InstallationKey)) {
-        $command += " --installationkeybypass"
+        $command += " --installation-key-bypass"
     }
     else {
-        $command += " --installationkey $InstallationKey"
+        $command += " --installation-key $InstallationKey"
     }
 
     if ($SkipValidation) {
-        $command += " --skipvalidation"
+        $command += " --skip-validation"
     }
     if ($WaitMinutes) {
         $command += " --wait $WaitMinutes"
     }
 
-    Invoke-Sfdx -Command $command
+    Invoke-Sf -Command $command
 }
 
 function Get-SalesforcePackageVersions {
@@ -162,8 +162,8 @@ function Get-SalesforcePackageVersions {
         $PackageId = $package.Id
     }
 
-    $command = "sfdx force:package:version:list"
-    $command += " --targetdevhubusername $DevHubUsername"
+    $command = "sf package version list"
+    $command += " --target-dev-hub $DevHubUsername"
     if ($PackageId) {
         $command += " --packages $PackageId"
     }
@@ -178,8 +178,8 @@ function Get-SalesforcePackageVersions {
     }
     $command += " --json"
 
-    $result = Invoke-Sfdx -Command $command
-    return Show-SfdxResult -Result $result
+    $result = Invoke-Sf -Command $command
+    return Show-SfResult -Result $result
 }
 
 function Promote-SalesforcePackageVersion {
@@ -190,16 +190,16 @@ function Promote-SalesforcePackageVersion {
         [Parameter(Mandatory = $false)][switch] $NoPrompt
     )
 
-    $command = "sfdx force:package:version:promote"
+    $command = "sf package version promote"
     $command += " --package $PackageVersionId"
-    $command += " --targetdevhubusername $DevHubUsername"
+    $command += " --target-dev-hub $DevHubUsername"
     if ($NoPrompt) {
-        $command += " --noprompt"
+        $command += " --no-prompt"
     }
     $command += " --json"
 
-    $result = Invoke-Sfdx -Command $command
-    return Show-SfdxResult -Result $result
+    $result = Invoke-Sf -Command $command
+    return Show-SfResult -Result $result
 }
 
 function Remove-SalesforcePackageVersion {
@@ -210,16 +210,16 @@ function Remove-SalesforcePackageVersion {
         [Parameter(Mandatory = $false)][switch] $NoPrompt
     )
 
-    $command = "sfdx force:package:version:delete"
+    $command = "sf package version delete"
     $command += " --package $PackageVersionId"
-    $command += " --targetdevhubusername $DevHubUsername"
+    $command += " --target-dev-hub $DevHubUsername"
     if ($NoPrompt) {
-        $command += " --noprompt"
+        $command += " --no-prompt"
     }
     $command += " --json"
 
-    $result = Invoke-Sfdx -Command $command
-    return Show-SfdxResult -Result $result
+    $result = Invoke-Sf -Command $command
+    return Show-SfResult -Result $result
 }
 
 function Install-SalesforcePackageVersion {
@@ -231,17 +231,17 @@ function Install-SalesforcePackageVersion {
         [Parameter(Mandatory = $false)][int] $WaitMinutes = 10
     )
 
-    $command = "sfdx force:package:install"
+    $command = "sf package install"
     $command += " --package $PackageVersionId"
-    $command += " --targetusername $DevHubUsername"
+    $command += " --target-org $DevHubUsername"
     if ($NoPrompt) {
-        $command += " --noprompt"
+        $command += " --no-prompt"
     }
     if ($WaitMinutes) {
         $command += " --wait $WaitMinutes"
-        $command += " --publishwait $WaitMinutes"
+        $command += " --publish-wait $WaitMinutes"
     }
-    Invoke-Sfdx -Command $command
+    Invoke-Sf -Command $command
 }
 
 Export-ModuleMember Get-SalesforcePackages
